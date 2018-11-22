@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2048
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMgardSigner", "GMgardSigner\GMgardSigner.csproj", "{5BC32C80-3DEC-4B47-84F2-0941D7319006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GMgardSigner.Tests", "GMgardSigner.Tests\GMgardSigner.Tests.csproj", "{05F81463-2EB8-4047-AAC6-2BB363BF5F99}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5BC32C80-3DEC-4B47-84F2-0941D7319006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BC32C80-3DEC-4B47-84F2-0941D7319006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BC32C80-3DEC-4B47-84F2-0941D7319006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BC32C80-3DEC-4B47-84F2-0941D7319006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05F81463-2EB8-4047-AAC6-2BB363BF5F99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05F81463-2EB8-4047-AAC6-2BB363BF5F99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05F81463-2EB8-4047-AAC6-2BB363BF5F99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05F81463-2EB8-4047-AAC6-2BB363BF5F99}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6DFDB3D4-2C2F-4BF1-A0A4-8177323FFF7C}
+	EndGlobalSection
+EndGlobal
