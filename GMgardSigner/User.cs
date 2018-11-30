@@ -21,17 +21,22 @@ namespace GMgardSigner
 
         public string Username { get; set; }
         public string Password { get; set; }
-        public CookieContainer Cookies { get; set; }
+
+        private CookieContainer _cookies;
+        public CookieContainer Cookies => _cookies;
 
         protected HttpClient Client = null;
         protected HttpResponseMessage LastResponse = null;
 
         protected User() { }
 
-        public static User Create(string username, string password)
+        public static User Create(string username, string password, CookieContainer cookies = null)
         {
-            var user = new User() { Username = username, Password = password};
-            user.Client = new HttpClient() { BaseAddress = new Uri(UrlHost) };
+            cookies = cookies ?? new CookieContainer();
+            var handler = new HttpClientHandler() { CookieContainer = cookies };
+            var user = new User() { Username = username, Password = password };
+            user.Client = new HttpClient(handler) { BaseAddress = new Uri(UrlHost) };
+            user._cookies = cookies;
             return user;
         }
 

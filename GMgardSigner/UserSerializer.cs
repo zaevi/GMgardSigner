@@ -28,8 +28,8 @@ namespace GMgardSigner
                 var username = bf.Deserialize(ms).ToString();
                 var password = bf.Deserialize(ms).ToString();
                 var cookies = bf.Deserialize(ms) as System.Net.CookieContainer;
-                var user = User.Create(username, password);
-                user.Cookies = cookies;
+                var user = User.Create(username, password, cookies);
+
                 return user;
             }
         }
