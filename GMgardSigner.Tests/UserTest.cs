@@ -58,7 +58,7 @@ namespace GMgardSigner.Tests
             if(!(await TestUser.CheckLoginAsync()))
                 await TestUser.LoginAsync();
 
-            var result = await TestUser.SignIn();
+            var result = await TestUser.SignInAsync();
 
             Assert.AreEqual(true, result.Days > 0);
         }

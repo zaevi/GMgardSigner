@@ -94,7 +94,7 @@ namespace GMgardSigner
             throw new NotImplementedException("ParseUserInfo not implemented yet.");
         }
 
-        public async Task<SignInResult> SignIn()
+        public async Task<SignInResult> SignInAsync()
         {
             HtmlDocument doc = null;
             if (LastResponse?.RequestMessage.RequestUri.AbsolutePath == "/")
