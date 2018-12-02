@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -13,10 +14,29 @@ namespace GMgardSigner
 
         public const int MaxLoginTimes = 2;
 
+        static List<string> Args = null;
+
+        static bool Silent = false;
+
         static async Task Main(string[] args)
         {
-            var user = GetUser(args);
-            if(!(await user.CheckLoginAsync()))
+            Args = new List<string>(args.Select(a => a.StartsWith("-") ? a.ToLower() : a));
+            if (Args.Contains("-s")) Silent = true;
+
+            User user = null;
+            bool hasLogined = false;
+            try
+            {
+                user = GetUser(args);
+                hasLogined = await user.CheckLoginAsync();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"初始化失败 ({ex.GetType().Name}: {ex.Message})");
+                Exit(-1);
+            }
+
+            if(!hasLogined)
             {
                 for (int i = 1; i <= MaxLoginTimes; i++)
                 {
@@ -34,7 +54,7 @@ namespace GMgardSigner
                         if(i == MaxLoginTimes)
                         {
                             Console.WriteLine($"连续{MaxLoginTimes}次登录失败, 可能账密有误; 也有可能脸太黑, 验证码均验证失败...");
-                            Environment.Exit(-1);
+                            Exit(-1);
                         }
                     }
                 }
@@ -51,50 +71,43 @@ namespace GMgardSigner
             catch (Exception ex)
             {
                 Console.WriteLine($"签到失败! ({ex.GetType().Name}: {ex.Message})");
-                Environment.Exit(-1);
+                Exit(-1);
             }
 
-            Environment.Exit(0);
+            Exit(0);
         }
 
         static User GetUser(string[] args)
         {
-            string username = null, password = null;
+            User user = null;
 
-            if (args.Length > 0)
-                username = args[0];
-            else
-            {
-                Console.Write("输入用户名: ");
-                username = Console.ReadLine();
-            }
+            var username = GetParameterValue("-u") ?? GetInput("输入账号: ") ?? throw new ArgumentException("没有提供账号");
 
             var path = GetUserDataPath(username);
             if(File.Exists(path))
             {
                 try
                 {
-                    return File.ReadAllBytes(path).ToUser();
+                    user = File.ReadAllBytes(path).ToUser();
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+                    Console.WriteLine($"({ex.GetType().Name}: {ex.Message})");
                 }
             }
 
-            if(args.Length > 1)
+            var password = GetParameterValue("-p");
+            if (user == null)
             {
-                password = args[1];
+                password = password ?? GetInput("输入密码: ", true) ?? throw new ArgumentException("没有提供密码");
+                user = User.Create(username, password);
             }
-            else
+            else if(password != null)
             {
-                Console.Write("输入密码: ");
-                password = Console.ReadLine();
-                Console.SetCursorPosition(10, Console.CursorTop - 1);
-                Console.WriteLine(new string('*', password.Length));
+                user.Password = password; // 更新密码
             }
 
-            return User.Create(username, password);
+            return user;
         }
 
         public static void SaveUser(User user)
@@ -105,7 +118,10 @@ namespace GMgardSigner
                 var path = GetUserDataPath(user.Username);
                 File.WriteAllBytes(path, user.ToBytes());
             }
-            catch { }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"({ex.GetType().Name}: {ex.Message})");
+            }
         }
 
         public static string GetUserDataPath(string username)
@@ -115,6 +131,36 @@ namespace GMgardSigner
                 byte[] s = md5.ComputeHash(Encoding.UTF8.GetBytes(username));
                 return AppDataPath + string.Join("", s.Select(c => c.ToString("x")));
             }
+        }
+
+        static string GetParameterValue(string key)
+        {
+            var index = Args.IndexOf(key) + 1;
+            return (index > 0 && Args.Count > index) ? Args[index] : null; 
+        }
+
+        static string GetInput(string message, bool mask = false)
+        {
+            if (Silent) return null;
+            Console.Write(message);
+            var left = Console.CursorLeft;
+            var value = Console.ReadLine();
+            if(mask)
+            {
+                Console.SetCursorPosition(left, Console.CursorTop - 1);
+                Console.WriteLine(new string('*', value.Length));
+            }
+            return value;
+        }
+
+        static void Exit(int code)
+        {
+            if(!Silent)
+            {
+                Console.Write("按下任意键退出...");
+                Console.ReadKey();
+            }
+            Environment.Exit(code);
         }
     }
 }
