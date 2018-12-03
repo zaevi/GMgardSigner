@@ -137,7 +137,7 @@ namespace GMgardSigner
 
         protected async Task<HtmlDocument> GetDocumentAsync(string requestUri)
         {
-            var response = await GetAsync(UrlLogin);
+            var response = await GetAsync(requestUri);
             return await GetDocumentAsync(response);
         }
 
