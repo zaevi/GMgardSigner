@@ -126,7 +126,7 @@ namespace GMgardSigner
         protected async Task<HttpResponseMessage> GetAsync(string requestUri)
         {
             LastResponse = null;
-            var response = await Client.GetAsync(UrlLogin);
+            var response = await Client.GetAsync(requestUri);
             if(response.IsSuccessStatusCode)
             {
                 LastResponse = response;
