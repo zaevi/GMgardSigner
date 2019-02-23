@@ -35,7 +35,7 @@ namespace GMgardSigner
             cookies = cookies ?? new CookieContainer();
             var handler = new HttpClientHandler() { CookieContainer = cookies };
             var user = new User() { Username = username, Password = password };
-            user.Client = new HttpClient(handler) { BaseAddress = new Uri(UrlHost) };
+            user.Client = new HttpClient(handler) { BaseAddress = new Uri(UrlHost), Timeout = TimeSpan.FromSeconds(20) };
             user._cookies = cookies;
             return user;
         }
@@ -48,7 +48,7 @@ namespace GMgardSigner
 
         public async Task LoginAsync()
         {
-            HtmlDocument doc = null;
+            HtmlDocument doc;
             if (LastResponse?.RequestMessage.RequestUri.AbsolutePath == UrlLogin)
                 doc = await GetDocumentAsync(LastResponse);
             else
@@ -57,13 +57,16 @@ namespace GMgardSigner
             // token
             var token = doc.DocumentNode.SelectSingleNode("//input[@name=\"__RequestVerificationToken\"]")
                 ?.GetAttributeValue("value", null)
-                ?? throw new HtmlWebException("Cannot parse token");
+                ?? throw new GMgardException("Cannot parse token");
 
             // captcha
-            var stream = await Client.GetStreamAsync(UrlCaptcha);
-            var captchaImg = new System.Drawing.Bitmap(stream);
-            var captchaCode = Captcha.Read(captchaImg, out var captchaText);
-            System.Diagnostics.Trace.WriteLine($"Captcha: {captchaText} => {captchaCode}");
+            int captchaCode;
+            {
+                var stream = await Client.GetStreamAsync(UrlCaptcha);
+                var captchaImg = new System.Drawing.Bitmap(stream);
+                captchaCode = Captcha.Read(captchaImg, out var captchaText);
+                System.Diagnostics.Trace.WriteLine($"Captcha: {captchaText} => {captchaCode}");
+            }
 
             var postData = BuildPostData(
                 "UserName", Username,
@@ -76,7 +79,7 @@ namespace GMgardSigner
             {
                 if (response.RequestMessage.RequestUri.AbsolutePath == UrlLogin)
                 {
-                    throw new NotImplementedException("user/pass/captcha error");
+                    throw new GMgardException("user/pass/captcha error");
                 }
                 else
                 {
@@ -100,11 +103,11 @@ namespace GMgardSigner
             if (LastResponse?.RequestMessage.RequestUri.AbsolutePath == "/")
                 doc = await GetDocumentAsync(LastResponse);
             else
-                doc = await GetDocumentAsync(UrlLogin);
+                doc = await GetDocumentAsync(UrlHost);
 
             var token = doc.DocumentNode.SelectSingleNode("//input[@name=\"__RequestVerificationToken\"]")
                 ?.GetAttributeValue("value", null)
-                ?? throw new HtmlWebException("Cannot parse token");
+                ?? throw new GMgardException("Cannot parse token");
 
             var postData = BuildPostData("ismakeup", "true", "__RequestVerificationToken", token);
             var response = await Client.PostAsync(UrlSignInPost, postData);
@@ -116,9 +119,11 @@ namespace GMgardSigner
                 var result = serializer.ReadObject(stream) as SignInResult;
                 return result;
             }
-            catch(System.Runtime.Serialization.SerializationException)
+            catch (System.Runtime.Serialization.SerializationException)
             {
-                throw new HttpRequestException("Not login");
+                stream.Position = 0;
+                var json = await new System.IO.StreamReader(stream).ReadToEndAsync();
+                throw new GMgardException($"Json parse error: {json}");
             }
         }
 
@@ -126,8 +131,8 @@ namespace GMgardSigner
         protected async Task<HttpResponseMessage> GetAsync(string requestUri)
         {
             LastResponse = null;
-            var response = await Client.GetAsync(UrlLogin);
-            if(response.IsSuccessStatusCode)
+            var response = await Client.GetAsync(requestUri);
+            if (response.IsSuccessStatusCode)
             {
                 LastResponse = response;
                 return response;

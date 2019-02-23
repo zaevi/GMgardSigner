@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
 namespace GMgardSigner
 {
@@ -13,5 +14,18 @@ namespace GMgardSigner
 
         [DataMember(Name = "exp")]
         public int Exp { get; set; }
+    }
+
+    public class GMgardException : Exception
+    {
+        public override string Message { get; }
+
+        public new object Data { get; }
+
+        public GMgardException(string message = null, Exception inner = null, object data = null) : base(message, inner)
+        {
+            Message = $"{message}" + (inner != null ? $" ({inner.GetType().Name}: {inner.Message})" : string.Empty);
+            Data = data;
+        }
     }
 }
