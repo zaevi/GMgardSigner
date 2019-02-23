@@ -9,7 +9,7 @@ namespace GMgardSigner.Tests
     public class UserTest
     {
         static User testUser;
-        static User TestUser { get {
+        public static User TestUser { get {
                 if(testUser == null)
                 {
                     var username = Environment.GetEnvironmentVariable("GMgardSignerTestUser");
