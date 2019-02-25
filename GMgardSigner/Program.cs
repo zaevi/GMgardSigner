@@ -12,8 +12,6 @@ namespace GMgardSigner
     {
         public static string AppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\GMgardSigner\";
 
-        public const int MaxLoginTimes = 2;
-
         static List<string> Args = null;
 
         static bool Silent = false;
@@ -23,58 +21,36 @@ namespace GMgardSigner
             Args = new List<string>(args.Select(a => a.StartsWith("-") ? a.ToLower() : a));
             if (Args.Contains("-s")) Silent = true;
 
-            User user = null;
-            bool hasLogined = false;
             try
             {
-                user = GetUser(args);
-                hasLogined = await user.CheckLoginAsync();
+                var user = GetUser(args);
+                if(await Signer.Execute(user))
+                {
+                    SaveUser(user);
+                }
             }
             catch(Exception ex)
             {
-                Console.WriteLine($"初始化失败 ({ex.GetType().Name}: {ex.Message})");
-                Exit(-1);
+                Error($"({ex.GetType().Name}: {ex.Message})");
             }
 
-            if(!hasLogined)
+            if (!Args.Contains("-s"))
             {
-                for (int i = 1; i <= MaxLoginTimes; i++)
-                {
-                    Console.Write("尝试登录...");
-                    try
-                    {
-                        await user.LoginAsync();
-                        Console.WriteLine("成功!");
-                        SaveUser(user);
-                        break;
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine($"失败! ({ex.GetType().Name}: {ex.Message})");
-                        if(i == MaxLoginTimes)
-                        {
-                            Console.WriteLine($"连续{MaxLoginTimes}次登录失败, 可能账密有误; 也有可能脸太黑, 验证码均验证失败...");
-                            Exit(-1);
-                        }
-                    }
-                }
+                Console.Write("按下任意键退出...");
+                Console.ReadKey();
             }
+        }
 
-            try
-            {
-                var result = await user.SignInAsync();
-                if(result.Success)
-                    Console.WriteLine($"签到成功! 经验+{result.Exp}, 已签到{result.Days}天");
-                else
-                    Console.WriteLine($"今天已签到. 已连签{result.Days}天");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"签到失败! ({ex.GetType().Name}: {ex.Message})");
-                Exit(-1);
-            }
+        public static void Log(string message)
+        {
+            Console.WriteLine(message);
+        }
 
-            Exit(0);
+        public static void Error(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Log(message);
+            Console.ResetColor();
         }
 
         static User GetUser(string[] args)
@@ -151,16 +127,6 @@ namespace GMgardSigner
                 Console.WriteLine(new string('*', value.Length));
             }
             return value;
-        }
-
-        static void Exit(int code)
-        {
-            if(!Silent)
-            {
-                Console.Write("按下任意键退出...");
-                Console.ReadKey();
-            }
-            Environment.Exit(code);
         }
     }
 }
